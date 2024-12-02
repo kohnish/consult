@@ -3371,6 +3371,7 @@ INITIAL input can be provided.  The symbol at point and the last
 search a subset of buffers, QUERY can be set to a plist according
 to `consult--buffer-query'."
   (interactive "P")
+  (vertico-mode)
   (unless (keywordp (car-safe query))
     (setq query (list :sort 'alpha-current :directory (and (not query) 'project))))
   (pcase-let* ((`(,prompt . ,buffers) (consult--buffer-query-prompt-single "Go to line" query))
