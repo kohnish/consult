@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2020
 ;; Version: 1.8
-;; Package-Requires: ((emacs "28.1") (compat "30"))
+
 ;; URL: https://github.com/minad/consult
 ;; Keywords: matching, files, completion
 
@@ -3371,9 +3371,10 @@ INITIAL input can be provided.  The symbol at point and the last
 search a subset of buffers, QUERY can be set to a plist according
 to `consult--buffer-query'."
   (interactive "P")
+  (vertico-mode)
   (unless (keywordp (car-safe query))
     (setq query (list :sort 'alpha-current :directory (and (not query) 'project))))
-  (pcase-let* ((`(,prompt . ,buffers) (consult--buffer-query-prompt "Go to line" query))
+  (pcase-let* ((`(,prompt . ,buffers) (consult--buffer-query-prompt-single "Go to line" query))
                (collection (consult--dynamic-collection
                             (apply-partially #'consult--line-multi-candidates
                                              buffers))))
@@ -4344,6 +4345,24 @@ to search and is passed to `consult--buffer-query'."
   (let* ((dir (plist-get query :directory))
          (ndir (consult--normalize-directory dir))
          (buffers (apply #'consult--buffer-query :directory ndir query))
+         (count (length buffers)))
+    (cons (format "%s (%d buffer%s%s): " prompt count
+                  (if (= count 1) "" "s")
+                  (cond
+                   ((and ndir (eq dir 'project))
+                    (format ", Project %s" (consult--project-name ndir)))
+                   (ndir (concat  ", " (consult--left-truncate-file ndir)))
+                   (t "")))
+          buffers)))
+
+(defun consult--buffer-query-prompt-single (prompt query)
+  "Return a list of buffers and create an appropriate prompt string.
+Return a pair of a prompt string and a list of buffers.  PROMPT
+is the prefix of the prompt string.  QUERY specifies the buffers
+to search and is passed to `consult--buffer-query'."
+  (let* ((dir (plist-get query :directory))
+         (ndir (consult--normalize-directory dir))
+         (buffers (list (current-buffer)))
          (count (length buffers)))
     (cons (format "%s (%d buffer%s%s): " prompt count
                   (if (= count 1) "" "s")
